@@ -126,10 +126,7 @@
 <body>
     <div class="container">
         <h1>Coordinate System: YIN & YANG</h1>
-        <div class="info-panel">
-            <div class="coordinate">X (YIN): <span id="xCoord">0</span></div>
-            <div class="coordinate">Y (YANG): <span id="yCoord">0</span></div>
-        </div>
+        <button onclick="randomizeElements()">Random</button>
         <canvas id="canvas" width="600" height="600"></canvas>
         <div class="selected-panel" id="selectedPanel">
             <div class="selected-info" id="selectedInfo"></div>
@@ -172,6 +169,9 @@
             { name: 'Water', color: '#2196f3', x: 35, y: 30 },
             { name: 'Wood', color: '#4caf50', x: 26, y: 58 }
         ];
+        
+        // Store original positions for watermarks
+        const originalPositions = elements.map(e => ({ x: e.x, y: e.y, color: e.color, name: e.name }));
         
         // Order for connecting lines
         const connectionOrder = [0, 1, 2, 3, 4, 0]; // fire -> earth -> metal -> water -> wood -> fire
@@ -285,6 +285,20 @@
         
         // Draw 5 elements
         function drawElements() {
+            // Draw watermarks (original positions) first
+            originalPositions.forEach((orig) => {
+                const pixelX = originX + orig.x * scale;
+                const pixelY = originY - orig.y * scale;
+                
+                // Draw faded circle at original position
+                ctx.fillStyle = orig.color;
+                ctx.globalAlpha = 0.15; // Faded watermark
+                ctx.beginPath();
+                ctx.arc(pixelX, pixelY, 21, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1.0; // Reset alpha
+            });
+            
             // Draw connecting lines first (so they appear behind the points)
             ctx.strokeStyle = '#666';
             ctx.lineWidth = 2;
@@ -370,39 +384,76 @@
             }
         }
         
+        // Randomize elements while maintaining total values
+        function randomizeElements() {
+            const totalX = 250;
+            const totalY = 251;
+            
+            let validConfig = false;
+            
+            while (!validConfig) {
+                validConfig = true;
+                let sumX = 0;
+                let sumY = 0;
+                
+                // Generate random values for first 4 elements (1-99)
+                for (let i = 0; i < 4; i++) {
+                    elements[i].x = Math.round((Math.random() * 98 + 1) * 1000) / 1000; // Random 1-99
+                    elements[i].y = Math.round((Math.random() * 98 + 1) * 1000) / 1000;
+                    sumX += elements[i].x;
+                    sumY += elements[i].y;
+                }
+                
+                // Calculate 5th element to maintain totals
+                elements[4].x = Math.round((totalX - sumX) * 1000) / 1000;
+                elements[4].y = Math.round((totalY - sumY) * 1000) / 1000;
+                
+                // Validate that 5th element is within 1-99
+                if (elements[4].x < 1 || elements[4].x > 99 || elements[4].y < 1 || elements[4].y > 99) {
+                    validConfig = false; // Regenerate if out of range
+                }
+            }
+            
+            // Deselect element and update display
+            selectedElement = null;
+            document.getElementById('selectedPanel').classList.remove('active');
+            draw();
+        }
+        
         // Change X value (YIN) with cascading effect
         function changeX(delta) {
             if (selectedElement !== null) {
                 if (delta > 0) {
-                    // Increase: take from previous elements with cascading percentages
-                    let remaining = delta;
-                    const percentages = [0.5, 0.25, 0.125, 0.06];
-                    
-                    for (let i = 1; i < 5 && remaining > 0.01; i++) {
-                        const sourceElement = (selectedElement - i + 5) % 5;
-                        const percentage = percentages[i - 1] || (percentages[percentages.length - 1] * 0.5);
-                        const amount = Math.min(remaining * percentage / (percentages[0]), elements[sourceElement].x);
+                    // Increase: add 1 unit at a time, cascading backwards through 4 elements
+                    for (let addCount = 0; addCount < delta; addCount++) {
+                        // Add 1 to selected element (clamp to max 99)
+                        elements[selectedElement].x = Math.min(99, Math.round((elements[selectedElement].x + 1) * 1000) / 1000);
                         
-                        elements[selectedElement].x = Math.min(100, elements[selectedElement].x + amount);
-                        elements[sourceElement].x = Math.max(0, elements[sourceElement].x - amount);
+                        // Cascade 1 unit backwards through 4 elements
+                        let amountToReduce = 1;
+                        let currentElement = (selectedElement - 1 + 5) % 5;
                         
-                        remaining -= amount;
+                        for (let i = 0; i < 4; i++) {
+                            const reduction = amountToReduce * 0.5;
+                            elements[currentElement].x = Math.max(1, Math.round((elements[currentElement].x - reduction) * 1000) / 1000);
+                            amountToReduce = reduction;
+                            currentElement = (currentElement - 1 + 5) % 5;
+                        }
                     }
                 } else if (delta < 0) {
-                    // Decrease: distribute to next elements with cascading percentages
-                    let remaining = -delta;
-                    const percentages = [0.5, 0.25, 0.125, 0.06];
+                    // Decrease: distribute to next elements with 50% cascading
+                    const totalToDistribute = -delta;
                     
-                    if (elements[selectedElement].x > remaining) {
-                        elements[selectedElement].x -= remaining;
+                    if (elements[selectedElement].x >= totalToDistribute) {
+                        elements[selectedElement].x = Math.max(1, Math.round((elements[selectedElement].x - totalToDistribute) * 1000) / 1000);
                         
-                        for (let i = 1; i < 5 && remaining > 0.01; i++) {
-                            const targetElement = (selectedElement + i) % 5;
-                            const percentage = percentages[i - 1] || (percentages[percentages.length - 1] * 0.5);
-                            const amount = remaining * percentage;
+                        let amountPassing = totalToDistribute;
+                        for (let i = 0; i < 4; i++) {
+                            const targetElement = (selectedElement + i + 1) % 5;
+                            const amountToKeep = Math.round(amountPassing * 500) / 1000; // 50% to 3 decimals
                             
-                            elements[targetElement].x = Math.min(100, elements[targetElement].x + amount);
-                            remaining -= amount;
+                            elements[targetElement].x = Math.min(99, Math.round((elements[targetElement].x + amountToKeep) * 1000) / 1000);
+                            amountPassing = Math.round((amountPassing - amountToKeep) * 1000) / 1000;
                         }
                     }
                 }
@@ -415,35 +466,36 @@
         function changeY(delta) {
             if (selectedElement !== null) {
                 if (delta > 0) {
-                    // Increase: take from previous elements with cascading percentages
-                    let remaining = delta;
-                    const percentages = [0.5, 0.25, 0.125, 0.06];
-                    
-                    for (let i = 1; i < 5 && remaining > 0.01; i++) {
-                        const sourceElement = (selectedElement - i + 5) % 5;
-                        const percentage = percentages[i - 1] || (percentages[percentages.length - 1] * 0.5);
-                        const amount = Math.min(remaining * percentage / (percentages[0]), elements[sourceElement].y);
+                    // Increase: add 1 unit at a time, cascading backwards through 4 elements
+                    for (let addCount = 0; addCount < delta; addCount++) {
+                        // Add 1 to selected element (clamp to max 99)
+                        elements[selectedElement].y = Math.min(99, Math.round((elements[selectedElement].y + 1) * 1000) / 1000);
                         
-                        elements[selectedElement].y = Math.min(100, elements[selectedElement].y + amount);
-                        elements[sourceElement].y = Math.max(0, elements[sourceElement].y - amount);
+                        // Cascade 1 unit backwards through 4 elements
+                        let amountToReduce = 1;
+                        let currentElement = (selectedElement - 1 + 5) % 5;
                         
-                        remaining -= amount;
+                        for (let i = 0; i < 4; i++) {
+                            const reduction = amountToReduce * 0.5;
+                            elements[currentElement].y = Math.max(1, Math.round((elements[currentElement].y - reduction) * 1000) / 1000);
+                            amountToReduce = reduction;
+                            currentElement = (currentElement - 1 + 5) % 5;
+                        }
                     }
                 } else if (delta < 0) {
-                    // Decrease: distribute to next elements with cascading percentages
-                    let remaining = -delta;
-                    const percentages = [0.5, 0.25, 0.125, 0.06];
+                    // Decrease: distribute to next elements with 50% cascading
+                    const totalToDistribute = -delta;
                     
-                    if (elements[selectedElement].y > remaining) {
-                        elements[selectedElement].y -= remaining;
+                    if (elements[selectedElement].y >= totalToDistribute) {
+                        elements[selectedElement].y = Math.max(1, Math.round((elements[selectedElement].y - totalToDistribute) * 1000) / 1000);
                         
-                        for (let i = 1; i < 5 && remaining > 0.01; i++) {
-                            const targetElement = (selectedElement + i) % 5;
-                            const percentage = percentages[i - 1] || (percentages[percentages.length - 1] * 0.5);
-                            const amount = remaining * percentage;
+                        let amountPassing = totalToDistribute;
+                        for (let i = 0; i < 4; i++) {
+                            const targetElement = (selectedElement + i + 1) % 5;
+                            const amountToKeep = Math.round(amountPassing * 500) / 1000; // 50% to 3 decimals
                             
-                            elements[targetElement].y = Math.min(100, elements[targetElement].y + amount);
-                            remaining -= amount;
+                            elements[targetElement].y = Math.min(99, Math.round((elements[targetElement].y + amountToKeep) * 1000) / 1000);
+                            amountPassing = Math.round((amountPassing - amountToKeep) * 1000) / 1000;
                         }
                     }
                 }
