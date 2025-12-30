@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YIN-YANG Axis System</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Arial', sans-serif;
+        }
+        
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-top: 0;
+        }
+        
+        .info-panel {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 5px;
+        }
+        
+        .coordinate {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .selected-panel {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e3f2fd;
+            border-radius: 5px;
+            display: none;
+        }
+        
+        .selected-panel.active {
+            display: block;
+        }
+        
+        .selected-info {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .control-group {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 10px;
+        }
+        
+        .value-control {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .value-control label {
+            font-weight: bold;
+            min-width: 30px;
+        }
+        
+        .value-control span {
+            font-size: 16px;
+            min-width: 40px;
+            text-align: center;
+        }
+        
+        .control-btn {
+            padding: 5px 10px;
+            background: #2196f3;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .control-btn:hover {
+            background: #1976d2;
+        }
+        
+        canvas {
+            display: block;
+            margin: 0 auto;
+            border: 1px solid #ddd;
+            cursor: crosshair;
+            background: white;
+        }
+        
+        button {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        button:hover {
+            background: #764ba2;
+        }
+        
+        .label-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .label-btn {
+            padding: 8px 16px;
+            background: #e0e0e0;
+            color: #333;
+            border: 2px solid #999;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        
+        .label-btn:hover {
+            background: #d0d0d0;
+        }
+        
+        .label-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #764ba2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="label-buttons">
+            <button class="label-btn active" id="btnElements" onclick="setLabelMode('elements')">Elements</button>
+            <button class="label-btn" id="btnOrgans" onclick="setLabelMode('organs')">Organs</button>
+            <button class="label-btn" id="btnEmotions" onclick="setLabelMode('emotions')">Emotions</button>
+        </div>
+        <canvas id="canvas" width="600" height="600"></canvas>
+        <div class="selected-panel" id="selectedPanel">
+            <div class="selected-info" id="selectedInfo"></div>
+            <div class="control-group">
+                <div class="value-control" style="flex-direction: column;">
+                    <label>YIN:</label>
+                    <div style="display: flex; align-items: center; gap: 8px; margin-top: 5px;">
+                        <div style="display: flex; flex-direction: column; align-items: center;">
+                            <button class="control-btn" onclick="changeX(-1)">−</button>
+                            <div id="yinMinus" style="color: #999; font-size: 16px; font-weight: bold; margin-top: 2px;">−</div>
+                        </div>
+                        <span id="xValue">0</span>
+                        <div style="display: flex; flex-direction: column; align-items: center;">
+                            <button class="control-btn" onclick="changeX(1)">+</button>
+                            <div id="yinPlus" style="color: #999; font-size: 16px; font-weight: bold; margin-top: 2px;">+</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="value-control" style="flex-direction: column;">
+                    <label>YANG:</label>
+                    <div style="display: flex; align-items: center; gap: 8px; margin-top: 5px;">
+                        <div style="display: flex; flex-direction: column; align-items: center;">
+                            <button class="control-btn" onclick="changeY(-1)">−</button>
+                            <div id="yangMinus" style="color: #999; font-size: 16px; font-weight: bold; margin-top: 2px;">--</div>
+                        </div>
+                        <span id="yValue">0</span>
+                        <div style="display: flex; flex-direction: column; align-items: center;">
+                            <button class="control-btn" onclick="changeY(1)">+</button>
+                            <div id="yangPlus" style="color: #999; font-size: 16px; font-weight: bold; margin-top: 2px;">--</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Canvas settings
+        const padding = 40;
+        const scale = (canvas.width - 2 * padding) / 100; // pixels per unit (0-100)
+        const originX = padding; // x = 0
+        const originY = canvas.height - padding; // y = 0
+        
+        // Axes meet at (50, 50)
+        const axisX = originX + 50 * scale; // x position of Y axis
+        const axisY = originY - 50 * scale; // y position of X axis
+        
+        // Predefined 5 elements - arranged in circle around (50, 50) with radius 25
+        const elements = [
+            { name: 'Fire', color: '#d32f2f', x: 50, y: 75 },
+            { name: 'Earth', color: '#ff9800', x: 74, y: 58 },
+            { name: 'Metal', color: '#9e9e9e', x: 65, y: 30 },
+            { name: 'Water', color: '#2196f3', x: 35, y: 30 },
+            { name: 'Wood', color: '#4caf50', x: 26, y: 58 }
+        ];
+        
+        // Label mappings for different modes
+        const labelModes = {
+            elements: ['Fire', 'Earth', 'Metal', 'Water', 'Wood'],
+            organs: ['Heart', 'Spleen', 'Lung', 'Kidney', 'Liver'],
+            emotions: ['שימחה', 'איכפתיות', 'עצב', 'פחד', 'כעס']
+        };
+        
+        let currentLabelMode = 'elements';
+        
+        // Set label mode and update display
+        function setLabelMode(mode) {
+            currentLabelMode = mode;
+            const labels = labelModes[mode];
+            for (let i = 0; i < elements.length; i++) {
+                elements[i].name = labels[i];
+            }
+            
+            // Update button styles
+            document.getElementById('btnElements').classList.remove('active');
+            document.getElementById('btnOrgans').classList.remove('active');
+            document.getElementById('btnEmotions').classList.remove('active');
+            document.getElementById('btn' + mode.charAt(0).toUpperCase() + mode.slice(1)).classList.add('active');
+            
+            // Update selected panel if element is selected
+            if (selectedElement !== null) {
+                updateSelectedPanel();
+            }
+            
+            draw();
+        }
+        
+        // Store original positions for watermarks
+        const originalPositions = elements.map(e => ({ x: e.x, y: e.y, color: e.color, name: e.name }));
+        
+        // Acupuncture points mapping (by index: Fire=0, Earth=1, Metal=2, Water=3, Wood=4)
+        const acuPoints = [
+            { plus: 'HT9', minus: 'HT7' },  // Fire
+            { plus: 'SP2', minus: 'SP5' },  // Earth
+            { plus: 'LU9', minus: 'LU5' },  // Metal
+            { plus: 'KI7', minus: 'KI5' },  // Water
+            { plus: 'LR8', minus: 'LR2' }   // Wood
+        ];
+        
+        // Order for connecting lines
+        const connectionOrder = [0, 1, 2, 3, 4, 0]; // fire -> earth -> metal -> water -> wood -> fire
+        
+        let selectedElement = null;
+        let clickCount = 0;
+        let celebrationActive = false;
+        let randomClicked = false;
+        let clickHistory = [];
+        
+        // Button positions and sizes
+        const randomButtonPos = {
+            x: 17,
+            y: -5,
+            width: 60,
+            height: 30
+        };
+        
+        const setMapButtonPos = {
+            x: 50,
+            y: -5,
+            width: 60,
+            height: 30
+        };
+        
+        const reloadMapButtonPos = {
+            x: 83,
+            y: -5,
+            width: 70,
+            height: 30
+        };
+        
+        // Saved map state (null means use original positions)
+        let savedMapState = null;
+        
+        // Draw the axis system
+        function drawAxis() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Grid lines
+            ctx.strokeStyle = '#e0e0e0';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= 100; i += 10) {
+                const xPos = originX + i * scale;
+                const yPos = originY - i * scale;
+                
+                // Vertical grid lines
+                ctx.beginPath();
+                ctx.moveTo(xPos, padding);
+                ctx.lineTo(xPos, canvas.height - padding);
+                ctx.stroke();
+                
+                // Horizontal grid lines
+                ctx.beginPath();
+                ctx.moveTo(padding, yPos);
+                ctx.lineTo(canvas.width - padding, yPos);
+                ctx.stroke();
+            }
+            
+            // X Axis (YIN) - horizontal line at y = 50
+            ctx.strokeStyle = '#1976d2';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(padding, axisY);
+            ctx.lineTo(canvas.width - padding, axisY);
+            ctx.stroke();
+            
+            // Y Axis (YANG) - vertical line at x = 50
+            ctx.strokeStyle = '#d32f2f';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(axisX, padding);
+            ctx.lineTo(axisX, canvas.height - padding);
+            ctx.stroke();
+            
+            // X Axis Arrow
+            ctx.fillStyle = '#1976d2';
+            ctx.beginPath();
+            ctx.moveTo(canvas.width - padding, axisY);
+            ctx.lineTo(canvas.width - padding - 15, axisY - 5);
+            ctx.lineTo(canvas.width - padding - 15, axisY + 5);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Y Axis Arrow
+            ctx.fillStyle = '#d32f2f';
+            ctx.beginPath();
+            ctx.moveTo(axisX, padding);
+            ctx.lineTo(axisX - 5, padding + 15);
+            ctx.lineTo(axisX + 5, padding + 15);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Axis Labels
+            ctx.fillStyle = '#1976d2';
+            ctx.font = 'bold 16px Arial';
+            ctx.textAlign = 'right';
+            ctx.fillText('YIN', canvas.width - 20, axisY + 25);
+            
+            ctx.fillStyle = '#d32f2f';
+            ctx.textAlign = 'center';
+            ctx.fillText('YANG', axisX - 15, padding - 5);
+            
+            // Tick marks and labels
+            ctx.fillStyle = '#333';
+            ctx.font = '12px Arial';
+            ctx.lineWidth = 1;
+            
+            for (let i = 0; i <= 100; i += 10) {
+                const xPos = originX + i * scale;
+                const yPos = originY - i * scale;
+                
+                // X axis ticks
+                ctx.beginPath();
+                ctx.moveTo(xPos, axisY - 3);
+                ctx.lineTo(xPos, axisY + 3);
+                ctx.stroke();
+                
+                // X axis labels - only 0 and 100
+                if (i === 0 || i === 100) {
+                    ctx.textAlign = 'center';
+                    ctx.fillText(i, xPos, axisY + 15);
+                }
+                
+                // Y axis ticks
+                ctx.beginPath();
+                ctx.moveTo(axisX - 3, yPos);
+                ctx.lineTo(axisX + 3, yPos);
+                ctx.stroke();
+                
+                // Y axis labels - only 0 and 100
+                if (i === 0 || i === 100) {
+                    ctx.textAlign = 'right';
+                    ctx.fillText(i, axisX - 10, yPos + 4);
+                }
+            }
+            
+
+        }
+        
+        // Draw 5 elements
+        function drawElements() {
+            // Draw watermarks (original positions) first
+            originalPositions.forEach((orig) => {
+                const pixelX = originX + orig.x * scale;
+                const pixelY = originY - orig.y * scale;
+                
+                // Draw faded circle at original position
+                ctx.fillStyle = orig.color;
+                ctx.globalAlpha = 0.15; // Faded watermark
+                ctx.beginPath();
+                ctx.arc(pixelX, pixelY, 21, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1.0; // Reset alpha
+            });
+            
+            // Draw connecting lines first (so they appear behind the points)
+            ctx.strokeStyle = '#666';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            
+            const firstPoint = elements[connectionOrder[0]];
+            const firstPixelX = originX + firstPoint.x * scale;
+            const firstPixelY = originY - firstPoint.y * scale;
+            ctx.moveTo(firstPixelX, firstPixelY);
+            
+            for (let i = 1; i < connectionOrder.length; i++) {
+                const element = elements[connectionOrder[i]];
+                const pixelX = originX + element.x * scale;
+                const pixelY = originY - element.y * scale;
+                ctx.lineTo(pixelX, pixelY);
+            }
+            ctx.stroke();
+            
+            // Draw circles for each element
+            elements.forEach((element, index) => {
+                const pixelX = originX + element.x * scale;
+                const pixelY = originY - element.y * scale;
+                
+                // Draw circle
+                ctx.fillStyle = element.color;
+                ctx.beginPath();
+                ctx.arc(pixelX, pixelY, 21, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Draw border - thicker if selected
+                ctx.strokeStyle = selectedElement === index ? '#000' : '#000';
+                ctx.lineWidth = selectedElement === index ? 3 : 1.5;
+                ctx.stroke();
+                
+                // Label - centered on the point
+                ctx.fillStyle = '#000';
+                ctx.font = 'bold 12px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(element.name, pixelX, pixelY);
+            });
+            
+            // Draw celebration if all elements are close to origin
+            if (celebrationActive) {
+                // Draw celebration stars around each element
+                elements.forEach((element, index) => {
+                    const pixelX = originX + element.x * scale;
+                    const pixelY = originY - element.y * scale;
+                    
+                    // Draw gold stars
+                    for (let s = 0; s < 5; s++) {
+                        const angle = (s / 5) * Math.PI * 2 + (Date.now() % 2000) / 2000 * Math.PI * 2;
+                        const distance = 40;
+                        const starX = pixelX + Math.cos(angle) * distance;
+                        const starY = pixelY + Math.sin(angle) * distance;
+                        
+                        ctx.fillStyle = '#FFD700';
+                        ctx.beginPath();
+                        for (let p = 0; p < 5; p++) {
+                            const starAngle = p * (Math.PI * 4 / 5);
+                            const starRadius = p % 2 === 0 ? 8 : 4;
+                            const sx = starX + Math.cos(starAngle) * starRadius;
+                            const sy = starY + Math.sin(starAngle) * starRadius;
+                            if (p === 0) ctx.moveTo(sx, sy);
+                            else ctx.lineTo(sx, sy);
+                        }
+                        ctx.closePath();
+                        ctx.fill();
+                    }
+                });
+                
+                // Draw click history
+                const history = formatClickHistory();
+                ctx.fillStyle = '#000000';
+                ctx.font = 'bold 18px Arial';
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'top';
+                ctx.shadowColor = 'rgba(0,0,0,0.5)';
+                ctx.shadowBlur = 5;
+                ctx.shadowOffsetX = 2;
+                ctx.shadowOffsetY = 2;
+                
+                let yPos = 50;
+                history.forEach(line => {
+                    ctx.fillText(line, 50, yPos);
+                    yPos += 25;
+                });
+                
+                // Draw total clicks
+                ctx.font = 'bold 20px Arial';
+                ctx.fillText(`Total ${clickCount} clicks`, 50, yPos + 10);
+                ctx.shadowColor = 'transparent';
+            }
+            
+            // Draw Random button
+            const btnPixelX = originX + randomButtonPos.x * scale;
+            const btnPixelY = originY - randomButtonPos.y * scale;
+            
+            ctx.fillStyle = '#667eea';
+            ctx.fillRect(btnPixelX - randomButtonPos.width / 2, btnPixelY - randomButtonPos.height / 2, randomButtonPos.width, randomButtonPos.height);
+            ctx.strokeStyle = '#764ba2';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(btnPixelX - randomButtonPos.width / 2, btnPixelY - randomButtonPos.height / 2, randomButtonPos.width, randomButtonPos.height);
+            
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 12px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('Random', btnPixelX, btnPixelY);
+            
+            // Draw Set Map button
+            const setMapPixelX = originX + setMapButtonPos.x * scale;
+            const setMapPixelY = originY - setMapButtonPos.y * scale;
+            
+            // Change color if map is saved
+            ctx.fillStyle = savedMapState ? '#2e7d32' : '#4caf50';
+            ctx.fillRect(setMapPixelX - setMapButtonPos.width / 2, setMapPixelY - setMapButtonPos.height / 2, setMapButtonPos.width, setMapButtonPos.height);
+            ctx.strokeStyle = savedMapState ? '#1b5e20' : '#388e3c';
+            ctx.lineWidth = savedMapState ? 3 : 2;
+            ctx.strokeRect(setMapPixelX - setMapButtonPos.width / 2, setMapPixelY - setMapButtonPos.height / 2, setMapButtonPos.width, setMapButtonPos.height);
+            
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 12px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(savedMapState ? '✓ Set Map' : 'Set Map', setMapPixelX, setMapPixelY);
+            
+            // Draw Reload Map button
+            const reloadMapPixelX = originX + reloadMapButtonPos.x * scale;
+            const reloadMapPixelY = originY - reloadMapButtonPos.y * scale;
+            
+            ctx.fillStyle = '#ff9800';
+            ctx.fillRect(reloadMapPixelX - reloadMapButtonPos.width / 2, reloadMapPixelY - reloadMapButtonPos.height / 2, reloadMapButtonPos.width, reloadMapButtonPos.height);
+            ctx.strokeStyle = '#f57c00';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(reloadMapPixelX - reloadMapButtonPos.width / 2, reloadMapPixelY - reloadMapButtonPos.height / 2, reloadMapButtonPos.width, reloadMapButtonPos.height);
+            
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 11px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('Reload Map', reloadMapPixelX, reloadMapPixelY);
+        }
+        
+        // Click handler
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const pixelX = e.clientX - rect.left;
+            const pixelY = e.clientY - rect.top;
+            
+            // Check if clicked on Random button
+            const btnPixelX = originX + randomButtonPos.x * scale;
+            const btnPixelY = originY - randomButtonPos.y * scale;
+            const btnLeft = btnPixelX - randomButtonPos.width / 2;
+            const btnRight = btnPixelX + randomButtonPos.width / 2;
+            const btnTop = btnPixelY - randomButtonPos.height / 2;
+            const btnBottom = btnPixelY + randomButtonPos.height / 2;
+            
+            if (pixelX >= btnLeft && pixelX <= btnRight && pixelY >= btnTop && pixelY <= btnBottom) {
+                randomizeElements();
+                return;
+            }
+            
+            // Check if clicked on Set Map button
+            const setMapPixelX = originX + setMapButtonPos.x * scale;
+            const setMapPixelY = originY - setMapButtonPos.y * scale;
+            const setMapLeft = setMapPixelX - setMapButtonPos.width / 2;
+            const setMapRight = setMapPixelX + setMapButtonPos.width / 2;
+            const setMapTop = setMapPixelY - setMapButtonPos.height / 2;
+            const setMapBottom = setMapPixelY + setMapButtonPos.height / 2;
+            
+            if (pixelX >= setMapLeft && pixelX <= setMapRight && pixelY >= setMapTop && pixelY <= setMapBottom) {
+                saveMap();
+                return;
+            }
+            
+            // Check if clicked on Reload Map button
+            const reloadMapPixelX = originX + reloadMapButtonPos.x * scale;
+            const reloadMapPixelY = originY - reloadMapButtonPos.y * scale;
+            const reloadMapLeft = reloadMapPixelX - reloadMapButtonPos.width / 2;
+            const reloadMapRight = reloadMapPixelX + reloadMapButtonPos.width / 2;
+            const reloadMapTop = reloadMapPixelY - reloadMapButtonPos.height / 2;
+            const reloadMapBottom = reloadMapPixelY + reloadMapButtonPos.height / 2;
+            
+            if (pixelX >= reloadMapLeft && pixelX <= reloadMapRight && pixelY >= reloadMapTop && pixelY <= reloadMapBottom) {
+                reloadMap();
+                return;
+            }
+            
+            // Check if clicked on any element
+            for (let i = 0; i < elements.length; i++) {
+                const element = elements[i];
+                const elementPixelX = originX + element.x * scale;
+                const elementPixelY = originY - element.y * scale;
+                
+                const distance = Math.sqrt(
+                    Math.pow(pixelX - elementPixelX, 2) + Math.pow(pixelY - elementPixelY, 2)
+                );
+                
+                if (distance <= 21) {
+                    selectedElement = i;
+                    updateSelectedPanel();
+                    draw();
+                    return;
+                }
+            }
+            
+            // Deselect if clicked elsewhere
+            selectedElement = null;
+            document.getElementById('selectedPanel').classList.remove('active');
+            draw();
+        });
+        
+        // Update selected panel display
+        function updateSelectedPanel() {
+            const panel = document.getElementById('selectedPanel');
+            if (selectedElement !== null) {
+                const element = elements[selectedElement];
+                document.getElementById('selectedInfo').textContent = `Selected: ${element.name}`;
+                document.getElementById('xValue').textContent = element.x;
+                document.getElementById('yValue').textContent = element.y;
+                panel.classList.add('active');
+                
+                // Set background color to element's color with transparency
+                panel.style.backgroundColor = element.color + '40'; // Add 40 for 25% opacity
+                
+                // Update acupuncture points for YIN
+                const points = acuPoints[selectedElement];
+                if (points) {
+                    document.getElementById('yinMinus').textContent = points.minus;
+                    document.getElementById('yinPlus').textContent = points.plus;
+                    document.getElementById('yinMinus').style.color = '#333';
+                    document.getElementById('yinPlus').style.color = '#333';
+                }
+            }
+        }
+        
+        // Randomize elements while maintaining total values
+        function randomizeElements() {
+            const totalX = 250;
+            const totalY = 251;
+            
+            let validConfig = false;
+            
+            while (!validConfig) {
+                validConfig = true;
+                let sumX = 0;
+                let sumY = 0;
+                
+                // Generate random values for first 4 elements (1-99)
+                for (let i = 0; i < 4; i++) {
+                    elements[i].x = Math.round((Math.random() * 98 + 1) * 1000) / 1000; // Random 1-99
+                    elements[i].y = Math.round((Math.random() * 98 + 1) * 1000) / 1000;
+                    sumX += elements[i].x;
+                    sumY += elements[i].y;
+                }
+                
+                // Calculate 5th element to maintain totals
+                elements[4].x = Math.round((totalX - sumX) * 1000) / 1000;
+                elements[4].y = Math.round((totalY - sumY) * 1000) / 1000;
+                
+                // Validate that 5th element is within 1-99
+                if (elements[4].x < 1 || elements[4].x > 99 || elements[4].y < 1 || elements[4].y > 99) {
+                    validConfig = false; // Regenerate if out of range
+                }
+            }
+            
+            // Reset click counter, history, and celebration
+            clickCount = 0;
+            clickHistory = [];
+            celebrationActive = false;
+            randomClicked = true;
+            
+            // Deselect element and update display
+            selectedElement = null;
+            document.getElementById('selectedPanel').classList.remove('active');
+            draw();
+        }
+        
+        // Save current map state
+        function saveMap() {
+            savedMapState = elements.map(e => ({ x: e.x, y: e.y }));
+            draw();
+        }
+        
+        // Reload map to saved state or original positions
+        function reloadMap() {
+            const targetState = savedMapState || originalPositions;
+            
+            for (let i = 0; i < elements.length; i++) {
+                elements[i].x = targetState[i].x;
+                elements[i].y = targetState[i].y;
+            }
+            
+            // Reset click counter, history, and celebration
+            clickCount = 0;
+            clickHistory = [];
+            celebrationActive = false;
+            
+            // Deselect element and update display
+            selectedElement = null;
+            document.getElementById('selectedPanel').classList.remove('active');
+            draw();
+        }
+        
+        // Check if any element reached extreme values (1 or 99)
+        function checkPatientStatus() {
+            for (let i = 0; i < elements.length; i++) {
+                if (elements[i].x === 1 || elements[i].x === 99 || elements[i].y === 1 || elements[i].y === 99) {
+                    alert('Oops, your patient is dead. Please try to keep the next one alive...');
+                    return;
+                }
+            }
+        }
+        
+        // Check if all elements are within 5 points of their origins
+        function checkCelebration() {
+            if (!randomClicked && !savedMapState) {
+                celebrationActive = false;
+                return;
+            }
+            
+            // Always compare against original positions (watermarks)
+            let allClose = true;
+            
+            for (let i = 0; i < elements.length; i++) {
+                const distX = Math.abs(elements[i].x - originalPositions[i].x);
+                const distY = Math.abs(elements[i].y - originalPositions[i].y);
+                
+                if (distX > 5 || distY > 5) {
+                    allClose = false;
+                    break;
+                }
+            }
+            
+            celebrationActive = allClose;
+        }
+        
+        // Format click history for display
+        function formatClickHistory() {
+            if (clickHistory.length === 0) return [];
+            
+            // Group consecutive identical actions
+            let grouped = [];
+            let currentGroup = {
+                elementName: clickHistory[0].elementName,
+                attribute: clickHistory[0].attribute,
+                direction: clickHistory[0].direction,
+                point: clickHistory[0].point,
+                count: 1
+            };
+            
+            for (let i = 1; i < clickHistory.length; i++) {
+                const click = clickHistory[i];
+                if (click.elementName === currentGroup.elementName && 
+                    click.attribute === currentGroup.attribute && 
+                    click.direction === currentGroup.direction) {
+                    currentGroup.count++;
+                } else {
+                    grouped.push(currentGroup);
+                    currentGroup = {
+                        elementName: click.elementName,
+                        attribute: click.attribute,
+                        direction: click.direction,
+                        point: click.point,
+                        count: 1
+                    };
+                }
+            }
+            grouped.push(currentGroup);
+            
+            // Format for display
+            return grouped.map(g => 
+                `${g.elementName} ${g.attribute}${g.direction} ${g.point}${g.count > 1 ? ' x' + g.count : ''}`
+            );
+        }
+        function changeX(delta) {
+            if (selectedElement !== null) {
+                clickCount++;
+                celebrationActive = false;
+                
+                const element = elements[selectedElement];
+                const points = acuPoints[selectedElement];
+                const point = delta > 0 ? points.plus : points.minus;
+                
+                // Record click
+                clickHistory.push({
+                    elementName: element.name,
+                    attribute: 'Yin',
+                    direction: delta > 0 ? '+' : '-',
+                    point: point
+                });
+                
+                if (delta > 0) {
+                    // Increase: add 1 unit at a time, cascading backwards through 4 elements
+                    for (let addCount = 0; addCount < delta; addCount++) {
+                        // Add 1 to selected element (clamp to max 99)
+                        elements[selectedElement].x = Math.min(99, Math.round((elements[selectedElement].x + 1) * 1000) / 1000);
+                        
+                        // Cascade 1 unit backwards through 4 elements
+                        let amountToReduce = 1;
+                        let currentElement = (selectedElement - 1 + 5) % 5;
+                        
+                        for (let i = 0; i < 4; i++) {
+                            const reduction = amountToReduce * 0.5;
+                            elements[currentElement].x = Math.max(1, Math.round((elements[currentElement].x - reduction) * 1000) / 1000);
+                            amountToReduce = reduction;
+                            currentElement = (currentElement - 1 + 5) % 5;
+                        }
+                    }
+                } else if (delta < 0) {
+                    // Decrease: distribute to next elements with 50% cascading
+                    const totalToDistribute = -delta;
+                    
+                    if (elements[selectedElement].x >= totalToDistribute) {
+                        elements[selectedElement].x = Math.max(1, Math.round((elements[selectedElement].x - totalToDistribute) * 1000) / 1000);
+                        
+                        let amountPassing = totalToDistribute;
+                        for (let i = 0; i < 4; i++) {
+                            const targetElement = (selectedElement + i + 1) % 5;
+                            const amountToKeep = Math.round(amountPassing * 500) / 1000; // 50% to 3 decimals
+                            
+                            elements[targetElement].x = Math.min(99, Math.round((elements[targetElement].x + amountToKeep) * 1000) / 1000);
+                            amountPassing = Math.round((amountPassing - amountToKeep) * 1000) / 1000;
+                        }
+                    }
+                }
+                checkPatientStatus();
+                checkCelebration();
+                updateSelectedPanel();
+                draw();
+            }
+        }
+        
+        // Change Y value (YANG) with cascading effect
+        function changeY(delta) {
+            if (selectedElement !== null) {
+                clickCount++;
+                celebrationActive = false;
+                
+                const element = elements[selectedElement];
+                
+                // Record click - Yang always uses '--' for point
+                clickHistory.push({
+                    elementName: element.name,
+                    attribute: 'Yang',
+                    direction: delta > 0 ? '+' : '-',
+                    point: '--'
+                });
+                
+                if (delta > 0) {
+                    // Increase: add 1 unit at a time, cascading backwards through 4 elements
+                    for (let addCount = 0; addCount < delta; addCount++) {
+                        // Add 1 to selected element (clamp to max 99)
+                        elements[selectedElement].y = Math.min(99, Math.round((elements[selectedElement].y + 1) * 1000) / 1000);
+                        
+                        // Cascade 1 unit backwards through 4 elements
+                        let amountToReduce = 1;
+                        let currentElement = (selectedElement - 1 + 5) % 5;
+                        
+                        for (let i = 0; i < 4; i++) {
+                            const reduction = amountToReduce * 0.5;
+                            elements[currentElement].y = Math.max(1, Math.round((elements[currentElement].y - reduction) * 1000) / 1000);
+                            amountToReduce = reduction;
+                            currentElement = (currentElement - 1 + 5) % 5;
+                        }
+                    }
+                } else if (delta < 0) {
+                    // Decrease: distribute to next elements with 50% cascading
+                    const totalToDistribute = -delta;
+                    
+                    if (elements[selectedElement].y >= totalToDistribute) {
+                        elements[selectedElement].y = Math.max(1, Math.round((elements[selectedElement].y - totalToDistribute) * 1000) / 1000);
+                        
+                        let amountPassing = totalToDistribute;
+                        for (let i = 0; i < 4; i++) {
+                            const targetElement = (selectedElement + i + 1) % 5;
+                            const amountToKeep = Math.round(amountPassing * 500) / 1000; // 50% to 3 decimals
+                            
+                            elements[targetElement].y = Math.min(99, Math.round((elements[targetElement].y + amountToKeep) * 1000) / 1000);
+                            amountPassing = Math.round((amountPassing - amountToKeep) * 1000) / 1000;
+                        }
+                    }
+                }
+                checkPatientStatus();
+                checkCelebration();
+                updateSelectedPanel();
+                draw();
+            }
+        }
+        
+        // Redraw everything
+        function draw() {
+            drawAxis();
+            drawElements();
+        }
+        
+        // Initial draw when page loads
+        window.addEventListener('load', () => {
+            draw();
+        });
+    </script>
+</body>
+</html>
