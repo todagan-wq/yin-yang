@@ -650,6 +650,58 @@
                     document.getElementById('yinMinus').style.color = '#333';
                     document.getElementById('yinPlus').style.color = '#333';
                 }
+                // Update acupuncture points for YANG (default to --)
+                const yangMinusEl = document.getElementById('yangMinus');
+                const yangPlusEl = document.getElementById('yangPlus');
+                yangMinusEl.textContent = '--';
+                yangPlusEl.textContent = '--';
+                yangMinusEl.style.color = '#999';
+                yangPlusEl.style.color = '#999';
+
+                // Special case: when Metal is selected, show the requested Yang '-' sequence
+                // Metal is the 3rd element in the default ordering (index 2)
+                if (elements[selectedElement].name && elements[selectedElement].name.toLowerCase() === 'metal') {
+                    yangMinusEl.textContent = 'LI6 -> LU5 -> KI4';
+                    yangPlusEl.textContent = 'ST40 -> LU9 -> LI6';
+                    yangMinusEl.style.color = '#333';
+                    yangPlusEl.style.color = '#333';
+                }
+
+                // Special case: when Water is selected, show BL65 and BL67 for Yang '-' and '+'
+                // Water is the 4th element in the default ordering (index 3)
+                if (elements[selectedElement].name && elements[selectedElement].name.toLowerCase() === 'water') {
+                    yangMinusEl.textContent = 'BL65';
+                    yangPlusEl.textContent = 'BL67';
+                    yangMinusEl.style.color = '#333';
+                    yangPlusEl.style.color = '#333';
+                }
+
+                // Special case: when Wood is selected, show GB38 and GB43 for Yang '-' and '+'
+                // Wood is the 5th element in the default ordering (index 4)
+                if (elements[selectedElement].name && elements[selectedElement].name.toLowerCase() === 'wood') {
+                    yangMinusEl.textContent = 'GB38';
+                    yangPlusEl.textContent = 'GB43';
+                    yangMinusEl.style.color = '#333';
+                    yangPlusEl.style.color = '#333';
+                }
+
+                // Special case: when Fire is selected, show SI8 and SI3 for Yang '-' and '+'
+                // Fire is the 1st element in the default ordering (index 0)
+                if (elements[selectedElement].name && elements[selectedElement].name.toLowerCase() === 'fire') {
+                    yangMinusEl.textContent = 'SI8';
+                    yangPlusEl.textContent = 'SI3';
+                    yangMinusEl.style.color = '#333';
+                    yangPlusEl.style.color = '#333';
+                }
+
+                // Special case: when Earth is selected, show ST45 and ST44 for Yang '-' and '+'
+                // Earth is the 2nd element in the default ordering (index 1)
+                if (elements[selectedElement].name && elements[selectedElement].name.toLowerCase() === 'earth') {
+                    yangMinusEl.textContent = 'ST45';
+                    yangPlusEl.textContent = 'ST44';
+                    yangMinusEl.style.color = '#333';
+                    yangPlusEl.style.color = '#333';
+                }
             }
         }
         
@@ -698,7 +750,7 @@
         // Save current map state
         function saveMap() {
             savedMapState = elements.map(e => ({ x: e.x, y: e.y }));
-            draw();
+            reloadMap();
         }
         
         // Reload map to saved state or original positions
@@ -754,6 +806,25 @@
             celebrationActive = allClose;
         }
         
+        // Get Yang point for selected element
+        function getYangPoint(elementIndex, direction) {
+            const element = elements[elementIndex];
+            const elementName = element.name.toLowerCase();
+            
+            if (elementName === 'fire') {
+                return direction > 0 ? 'SI3' : 'SI8';
+            } else if (elementName === 'earth') {
+                return direction > 0 ? 'ST44' : 'ST45';
+            } else if (elementName === 'metal') {
+                return direction > 0 ? 'ST40 -> LU9 -> LI6' : 'LI6 -> LU5 -> KI4';
+            } else if (elementName === 'water') {
+                return direction > 0 ? 'BL67' : 'BL65';
+            } else if (elementName === 'wood') {
+                return direction > 0 ? 'GB43' : 'GB38';
+            }
+            return '--';
+        }
+
         // Format click history for display
         function formatClickHistory() {
             if (clickHistory.length === 0) return [];
@@ -857,13 +928,14 @@
                 celebrationActive = false;
                 
                 const element = elements[selectedElement];
+                const yangPoint = getYangPoint(selectedElement, delta);
                 
-                // Record click - Yang always uses '--' for point
+                // Record click - Yang uses the actual point based on element
                 clickHistory.push({
                     elementName: element.name,
                     attribute: 'Yang',
                     direction: delta > 0 ? '+' : '-',
-                    point: '--'
+                    point: yangPoint
                 });
                 
                 if (delta > 0) {
